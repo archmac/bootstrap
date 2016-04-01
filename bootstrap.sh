@@ -87,12 +87,25 @@ function make_install() {
 }
 
 function make_libtool() {
+    make_install --program-prefix=g --enable-ltdl-install
+}
+
+function make_autoconf() {
+    perl -pi -e 's/libtoolize/glibtoolize/' bin/autoreconf.in
+    perl -pi -e 's/libtoolize/glibtoolize/' man/autoreconf.1
     make_install
-    ln -s "$bootstrap_dir/bin/"{libtoolize,glibtoolize}
+}
+
+function make_automake() {
+    make_install
+    (perl -pe 's/^ {6}//' > "$bootstrap_dir/share/aclocal/dirlist") <<<"
+      $bootstrap_dir/share/aclocal
+      /usr/share/aclocal
+    "
 }
 
 function make_openssl() {
-    perl ./Configure --prefix="$bootstrap_dir" no-ssl2 darwin64-x86_64-cc enable-ec_nistp_64_gcc_128 #--openssldir=
+    perl ./Configure --prefix="$bootstrap_dir" no-ssl2 zlib-dynamic shared enable-cms darwin64-x86_64-cc enable-ec_nistp_64_gcc_128 #--openssldir=
     make depend
     make
     make install
@@ -100,7 +113,7 @@ function make_openssl() {
 
 function make_libarchive() {
     ./build/autogen.sh
-    make_install
+    make_install --without-xml2 --without-nettle --without-lzo2
 }
 
 function make_fakeroot() {
@@ -119,7 +132,7 @@ function make_fakeroot() {
        }
        #endif
     '
-    ./configure --prefix="$bootstrap_dir" --libdir="$bootstrap_dir/lib/libfakeroot" --disable-static --with-ipc=sysv
+    ./configure --prefix="$bootstrap_dir" --libdir="$bootstrap_dir/lib/libfakeroot" --disable-static --with-ipc=sysv --disable-dependency-tracking --disable-silent-rules
     make wraptmpf.h
     (perl -pe 's/^ {6}//' | patch) <<<'
       diff --git a/wraptmpf.h b/wraptmpf.h
@@ -150,7 +163,7 @@ function make_pacman() {
     export LIBCURL_LIBS="-lcurl"
     #export LIBSSL_CFLAGS="-I${bootstrap_dir/include"
     #export LIBSSL_LIBS="-lssl"
-    ./configure --prefix="$bootstrap_dir" --enable-doc --with-scriptlet-shell="$bootstrap_dir/bin/bash" --with-curl
+    ./configure --prefix="$bootstrap_dir" --enable-doc --with-scriptlet-shell="$bootstrap_dir/bin/bash" --with-curl --disable-silent-rules --disable-dependency-tracking
     make
     make -C contrib
     make install
@@ -164,7 +177,7 @@ function make_pacman() {
 function make_gpg() {
     local sdk_path
     sdk_path="$(xcodebuild -sdk -version | grep Path | grep Developer/SDKs/MacOSX10 | cut -d' ' -f2)"
-    LDFLAGS="-lresolv" gl_cv_absolute_stdint_h="$sdk_path/usr/include/stdint.h" ./configure --prefix="$bootstrap_dir" --enable-maintainer-mode --enable-symcryptrun
+    LDFLAGS="-lresolv" gl_cv_absolute_stdint_h="$sdk_path/usr/include/stdint.h" ./configure --prefix="$bootstrap_dir" --enable-maintainer-mode --enable-symcryptrun --disable-dependency-tracking
     LDFLAGS="-lresolv" make
     make install
 
@@ -177,25 +190,27 @@ cd "$build_dir"
 # shellcheck disable=SC2016,SC2046
 {
     lazy "$bootstrap_dir/share/man/man1/gettext.1" \
-    log gettext within $(expand $(fetch https://ftp.gnu.org/gnu/gettext/gettext-0.19.7.tar.xz)) make_install
+    log gettext within $(expand $(fetch https://ftp.gnu.org/gnu/gettext/gettext-0.19.7.tar.xz)) make_install --disable-dependency-tracking --disable-silent-rules --disable-debug --with-included-gettext --with-included-glib --with-included-libcroco --with-included-libunistring --without-git --without-cvs --without-xz
+
+    lazy "$bootstrap_dir/share/man/man1/glibtool.1" \
+    log libtool within $(expand $(fetch http://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz)) make_libtool
 
     lazy "$bootstrap_dir/share/man/man1/autoconf.1" \
-    log autoconf within $(expand $(fetch http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz)) make_install
+    log autoconf within $(expand $(fetch http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz)) make_autoconf
 
     lazy "$bootstrap_dir/share/man/man1/automake.1" \
-    log automake within $(expand $(fetch http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz)) make_install
+    log automake within $(expand $(fetch http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz)) make_automake
 
     lazy "$bootstrap_dir/share/man/man1/pkg-config.1" \
-    log pkg_config within $(expand $(fetch https://pkgconfig.freedesktop.org/releases/pkg-config-0.29.1.tar.gz)) make_install --with-internal-glib
-
-    lazy "$bootstrap_dir/share/man/man1/libtool.1" \
-    log libtool within $(expand $(fetch http://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz)) make_libtool
+    log pkg-config within $(expand $(fetch https://pkgconfig.freedesktop.org/releases/pkg-config-0.29.1.tar.gz)) make_install --with-internal-glib --disable-debug
+    # LD_FLAGS
+    # --with-pc-path=
 
     lazy "$bootstrap_dir/share/man/man1/bash.1" \
     log bash within $(expand $(fetch http://ftp.gnu.org/gnu/bash/bash-4.3.tar.gz)) make_install
 
     lazy "$bootstrap_dir/bin/xz" \
-    log xz within $(expand $(fetch http://tukaani.org/xz/xz-5.2.2.tar.gz)) make_install
+    log xz within $(expand $(fetch http://tukaani.org/xz/xz-5.2.2.tar.gz)) make_install --disable-debug --disable-dependency-tracking --disable-silent-rules
 
     lazy "$bootstrap_dir/bin/openssl" \
     log openssl within $(expand $(fetch https://www.openssl.org/source/openssl-1.0.2g.tar.gz)) make_openssl
