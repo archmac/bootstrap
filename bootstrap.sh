@@ -104,9 +104,42 @@ function make_libarchive() {
 }
 
 function make_fakeroot() {
-    patch -Np0 < "$(fetch https://raw.githubusercontent.com/kladd/pacman-osx-pkgs/osx-10.10/core/darwin-fakeroot/darwin-fakeroot.patch)"
-    make PREFIX="$bootstrap_dir"
-    make PREFIX="$bootstrap_dir" install
+    patch < "$(fetch 'https://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;filename=0002-OS-X-10.10-introduced-id_t-int-in-gs-etpriority.patch;att=2;bug=766649')"
+    patch < "$(fetch 'https://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;filename=0001-Implement-openat-2-wrapper-which-handles-optional-ar.patch;att=1;bug=766649')"
+    (perl -pe 's/^ {6}//' | patch) <<<'
+      index 15fdd1d..29d738d 100644
+      --- a/libfakeroot.c
+      +++ b/libfakeroot.c
+      @@ -2446,6 +2446,6 @@ int openat(int dir_fd, const char *pathname, int flags, ...)
+               va_end(args);
+               return next_openat(dir_fd, pathname, flags, mode);
+           }
+      -    return next_openat(dir_fd, pathname, flags);
+      +    return next_openat(dir_fd, pathname, flags, NULL);
+       }
+       #endif
+    '
+    ./configure --prefix="$bootstrap_dir" --libdir="$bootstrap_dir/lib/libfakeroot" --disable-static --with-ipc=sysv
+    make wraptmpf.h
+    (perl -pe 's/^ {6}//' | patch) <<<'
+      diff --git a/wraptmpf.h b/wraptmpf.h
+      index dbfccc9..0e04771 100644
+      --- a/wraptmpf.h
+      +++ b/wraptmpf.h
+      @@ -575,6 +575,10 @@ static __inline__ int next_mkdirat (int dir_fd, const char *pathname, mode_t mod
+       #endif /* HAVE_MKDIRAT */
+       #ifdef HAVE_OPENAT
+       extern int openat (int dir_fd, const char *pathname, int flags, ...);
+      +static __inline__ int next_openat (int dir_fd, const char *pathname, int flags, mode_t mode) __attribute__((always_inline));
+      +static __inline__ int next_openat (int dir_fd, const char *pathname, int flags, mode_t mode) {
+      +  return openat (dir_fd, pathname, flags, mode);
+      +}
+
+       #endif /* HAVE_OPENAT */
+       #ifdef HAVE_RENAMEAT
+    '
+    make
+    make install
 }
 
 function make_pacman() {
@@ -174,8 +207,7 @@ cd "$build_dir"
     log asciidoc within $(expand $(fetch http://downloads.sourceforge.net/project/asciidoc/asciidoc/8.6.9/asciidoc-8.6.9.tar.gz)) make_install
 
     lazy "$bootstrap_dir/bin/fakeroot" \
-    log fakeroot within $(expand $(fetch https://github.com/duskwuff/darwin-fakeroot/archive/v1.1.tar.gz darwin-fakeroot-1.1.tar.gz)) make_fakeroot
-
+    log fakeroot within $(expand $(fetch http://http.debian.net/debian/pool/main/f/fakeroot/fakeroot_1.20.2.orig.tar.bz2 fakeroot-1.20.2.tar.bz2)) make_fakeroot
 
     lazy "$bootstrap_dir/share/man/man1/gpg-error-config.1" \
     log libgpg-error within $(expand $(fetch ftp://ftp.gnupg.org/gcrypt/libgpg-error/libgpg-error-1.21.tar.bz2)) make_install
