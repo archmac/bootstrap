@@ -17,7 +17,7 @@ if [[ $# -ge 1 && $1 == "shell" ]]; then
 fi
 
 if [[ $# -ge 1 && $1 == "pristine" ]]; then
-    rm -rf bootstrap build
+    rm -rf "$bootstrap_dir" "$build_dir"
 fi
 
 function fetch() {
