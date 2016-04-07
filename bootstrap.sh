@@ -156,6 +156,8 @@ function make_fakeroot() {
 }
 
 function make_pacman() {
+    patch -p0 < ../../pacman-usr.patch
+
     export CFLAGS="-I${bootstrap_dir}/include"
     export LIBARCHIVE_CFLAGS="-I${bootstrap_dir}/include"
     export LIBARCHIVE_LIBS="-larchive"
@@ -251,4 +253,3 @@ cd "$build_dir"
 
 "$bootstrap_dir/bin/pacman" -V
 "$bootstrap_dir/bin/makepkg" -V
-
