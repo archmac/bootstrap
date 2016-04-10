@@ -1,0 +1,109 @@
+pkgname=pacman
+pkgver=5.0.1
+pkgrel=1
+pkgdesc="A library-based package manager with dependency support"
+arch=('i686' 'x86_64')
+url="http://www.archlinux.org/pacman/"
+license=('GPL')
+groups=('base' 'base-devel')
+#depends=('bash' 'glibc' 'libarchive' 'curl'
+#         'gpgme' 'pacman-mirrorlist' 'archlinux-keyring')
+depends=('bash' 'libarchive' 'gnupg' 'pacman-mirrorlist')
+makedepends=('asciidoc')   # roundup patch alters docs
+checkdepends=('python2' 'fakechroot')
+provides=('pacman-contrib')
+conflicts=('pacman-contrib')
+replaces=('pacman-contrib')
+backup=(usr/local/etc/pacman.conf usr/local/etc/makepkg.conf)
+#options=('strip' 'debug')
+options=('strip')
+source=(https://sources.archlinux.org/other/pacman/$pkgname-$pkgver.tar.gz{,.sig}
+        0001-libmakepkg-fix-is_array-function.patch
+        pacman-usr.patch
+        pacman-usr-local.patch
+        pacman-tmp-scriptlet.patch
+        pacman.conf.x86_64
+        makepkg.conf)
+md5sums=('377a2664d6007d72d6d8a126add83bcf'
+         'SKIP'
+         '55732144f1048f714f1f93203e9b7728'
+         'fe6970bda9213e4315e9db2b4f64eee7'
+         'da9deb0714377af941ef489bea34f76d'
+         '1566454cbabb535e36017a00e0eef370'
+         'd7306c4a40d5ed6ce2ef6f53923f474a'
+         '83b83e4d4d4fafe00a0279404dc1578d')
+validpgpkeys=('6645B0A8C7005E78DB1D7864F99FFE0FEAE999BD')  # Allan McRae <allan@archlinux.org>
+
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -p1 -i $srcdir/0001-libmakepkg-fix-is_array-function.patch
+  patch -p0 < ../pacman-usr.patch
+  patch -p0 < ../pacman-usr-local.patch
+  patch -p0 < ../pacman-tmp-scriptlet.patch
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  export LIBARCHIVE_CFLAGS="-I/usr/local/include"
+  export LIBARCHIVE_LIBS="-larchive"
+  export LIBCURL_CFLAGS="-I/usr/include/curl"
+  export LIBCURL_LIBS="-lcurl"
+  #export LIBSSL_CFLAGS="-I${bootstrap_dir/include"
+  #export LIBSSL_LIBS="-lssl"
+
+  ./configure --prefix=/usr/local --sysconfdir=/usr/local/etc \
+    --localstatedir=/usr/local/var --enable-doc \
+    --with-scriptlet-shell=/usr/local/bin/bash \
+    --with-curl \
+    --disable-silent-rules \
+    --disable-dependency-tracking
+    #--with-ldconfig=/usr/bin/ldconfig
+  make V=1
+  make -C contrib
+}
+
+check() {
+  make -C "$pkgname-$pkgver" check
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+  make DESTDIR="$pkgdir" -C contrib install
+
+  # install Arch specific stuff
+  install -d -m755 "$pkgdir/usr/local/etc"
+  install -m644 "$srcdir/pacman.conf.$CARCH" "$pkgdir/usr/local/etc/pacman.conf"
+
+  case $CARCH in
+    x86_64)
+      mycarch="x86_64"
+      mychost="x86_64-apple-darwin15.4.0"
+      myflags="-march=x86-64"
+      ;;
+  esac
+
+  # set things correctly in the default conf file
+  install -m644 "$srcdir/makepkg.conf" "$pkgdir/usr/local/etc"
+  sed -i~ \
+    -e "s|@CARCH[@]|$mycarch|g" \
+    -e "s|@CHOST[@]|$mychost|g" \
+    -e "s|@CARCHFLAGS[@]|$myflags|g" \
+    "$pkgdir/usr/local/etc/makepkg.conf"
+
+  ## put bash_completion in the right location
+  install -d m755 "$pkgdir/usr/local/share/bash-completion/completions"
+  mv "$pkgdir/usr/local/etc/bash_completion.d/pacman" "$pkgdir/usr/local/share/bash-completion/completions"
+  rmdir "$pkgdir/usr/local/etc/bash_completion.d"
+
+  for f in makepkg pacman-key; do
+    ln -s pacman "$pkgdir/usr/local/share/bash-completion/completions/$f"
+  done
+
+  install -d -m755 "$pkgdir/usr/local/share/vim/vimfiles/syntax"
+  install -m644 contrib/PKGBUILD.vim "$pkgdir/usr/local/share/vim/vimfiles/syntax/PKGBUILD.vim"
+}

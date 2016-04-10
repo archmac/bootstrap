@@ -112,6 +112,10 @@ function make_openssl() {
 }
 
 function make_libarchive() {
+    patch < "$(fetch 'https://projects.archlinux.org/svntogit/packages.git/plain/trunk/0001-Limit-write-requests-to-at-most-INT_MAX.patch?h=packages/libarchive')"
+    patch < "$(fetch 'https://projects.archlinux.org/svntogit/packages.git/plain/trunk/0001-mtree-fix-line-filename-length-calculation.patch?h=packages/libarchive')"
+    patch < "$(fetch 'https://projects.archlinux.org/svntogit/packages.git/plain/trunk/libarchive-3.1.2-acl.patch?h=packages/libarchive')"
+    patch < "$(fetch 'https://projects.archlinux.org/svntogit/packages.git/plain/trunk/libarchive-3.1.2-sparce-mtree.patch?h=packages/libarchive')"
     ./build/autogen.sh
     make_install --without-xml2 --without-nettle --without-lzo2
 }
@@ -157,6 +161,8 @@ function make_fakeroot() {
 
 function make_pacman() {
     patch -p0 < ../../pacman-usr.patch
+    patch -p0 < ../../pacman-usr-local.patch
+    patch -p0 < ../../pacman-tmp-scriptlet.patch
 
     export CFLAGS="-I${bootstrap_dir}/include"
     export LIBARCHIVE_CFLAGS="-I${bootstrap_dir}/include"
@@ -174,6 +180,7 @@ function make_pacman() {
     perl -pi -e 's/#(C(?:XX|)FLAGS)="(.*?)"/$1="-march=x86-64 -mtune=generic $2"/' "$bootstrap_dir/etc/makepkg.conf"
     perl -pi -e "s/(PKGEXT)='.*?'/\$1='.pkg.tar.xz'/" "$bootstrap_dir/etc/makepkg.conf"
     perl -pi -e "s/(SRCEXT)='.*?'/\$1='.src.tar.xz'/" "$bootstrap_dir/etc/makepkg.conf"
+    perl -pi -e "s/(PURGE_TARGETS)=.*?$/\$1=(usr\/{,local\/}{,share}\/info\/dir .packlist \*.pod)/" "$bootstrap_dir/etc/makepkg.conf"
 }
 
 function make_gpg() {
@@ -186,11 +193,12 @@ function make_gpg() {
     ln -s "$bootstrap_dir/bin/"{gpg2,gpg}
 }
 
-mkdir -p "$build_dir"
-cd "$build_dir"
-
 # shellcheck disable=SC2016,SC2046
+function bootstrap_stage1()
 {
+    mkdir -p "$build_dir"
+    pushd "$build_dir"
+
     lazy "$bootstrap_dir/share/man/man1/gettext.1" \
     log gettext within $(expand $(fetch https://ftp.gnu.org/gnu/gettext/gettext-0.19.7.tar.xz)) make_install --disable-dependency-tracking --disable-silent-rules --disable-debug --with-included-gettext --with-included-glib --with-included-libcroco --with-included-libunistring --without-git --without-cvs --without-xz
 
@@ -249,7 +257,64 @@ cd "$build_dir"
 
     lazy "$bootstrap_dir/bin/pacman" \
     log pacman within $(expand $(fetch https://sources.archlinux.org/other/pacman/pacman-5.0.1.tar.gz)) make_pacman
+
+    "$bootstrap_dir/bin/pacman" -V
+    "$bootstrap_dir/bin/makepkg" -V
+    popd
 }
 
-"$bootstrap_dir/bin/pacman" -V
-"$bootstrap_dir/bin/makepkg" -V
+function bootstrap_stage2() {
+    export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
+    local repo="mini"
+    local pkgs="filesystem libtool autoconf automake pkg-config gettext readline bash xz openssl libarchive asciidoc fakeroot libgpg-error libgcrypt libassuan libksba pth pinentry gnupg gpgme pacman-mirrorlist pacman"
+
+    sudo mkdir -p /usr/local/var/lib/pacman
+    for pkg in $pkgs; do
+        if [[ ! -e "$repo/$pkg/PKGBUILD" ]]; then
+            echo "missing $pkg"
+            continue
+        fi
+
+        if pacman -Q -b /usr/local/var/lib/pacman $pkg >/dev/null 2>&1; then
+            echo "skipping $pkg"
+            continue
+        fi
+
+        pushd "$repo/$pkg"
+        makepkg --skippgpcheck --nocheck --nodeps --force
+        sudo pacman --upgrade --dbpath /usr/local/var/lib/pacman --noconfirm --nodeps "${pkg}"-*.pkg.tar.xz
+        popd
+    done
+}
+
+function bootstrap_stage3() {
+    export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+    export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
+    local repo="mini"
+    local pkgs="filesystem libtool autoconf automake pkg-config gettext readline bash xz openssl libarchive asciidoc fakeroot libgpg-error libgcrypt libassuan libksba pth pinentry gnupg gpgme pacman-mirrorlist pacman"
+
+    sudo rm -rf $repo/*/{pkg,src}
+    for pkg in $pkgs; do
+        if [[ ! -e "$repo/$pkg/PKGBUILD" ]]; then
+            echo "missing $pkg"
+            continue
+        fi
+
+        pushd "$repo/$pkg"
+        makepkg --skippgpcheck --nocheck --force
+        sudo pacman --upgrade --noconfirm "${pkg}"-*.pkg.tar.xz
+        popd
+    done
+}
+
+if [[ $# -ge 1 && $1 == "stage1" ]]; then
+    bootstrap_stage1
+fi
+
+if [[ $# -ge 1 && $1 == "stage2" ]]; then
+    bootstrap_stage2
+fi
+
+if [[ $# -ge 1 && $1 == "stage3" ]]; then
+    bootstrap_stage3
+fi

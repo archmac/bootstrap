@@ -1,2 +1,5 @@
-/stage1
-/build
+/stage1/
+/build/
+/mini/*/pkg/
+/mini/*/src/
+/mini/*/*.tar.*
