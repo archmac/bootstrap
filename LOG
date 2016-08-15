@@ -205,3 +205,7 @@ pacman -Ql | grep -v '/usr/local' | grep -v '^[^ ]* /usr/$'
 
 ==> WARNING: Cannot find library listed in 'provides': libarchive.so
 
+# chroot of foo.install
+
+/tmp/alpm_ynXgDS/.INSTALL: line 1: 10781 Killed: 9               /sbin/kextload /Library/Extensions/{tun,tap}.kext
+20/04/2016 11:08:37.000 kernel[0]: AMFI: hook..execve() killing pid 10781: not allowed in chroot
