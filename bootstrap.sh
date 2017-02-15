@@ -180,7 +180,7 @@ function make_pacman() {
     perl -pi -e 's/#(C(?:XX|)FLAGS)="(.*?)"/$1="-march=x86-64 -mtune=generic $2"/' "$bootstrap_dir/etc/makepkg.conf"
     perl -pi -e "s/(PKGEXT)='.*?'/\$1='.pkg.tar.xz'/" "$bootstrap_dir/etc/makepkg.conf"
     perl -pi -e "s/(SRCEXT)='.*?'/\$1='.src.tar.xz'/" "$bootstrap_dir/etc/makepkg.conf"
-    perl -pi -e "s/(PURGE_TARGETS)=.*?$/\$1=(usr\/{,local\/}{,share}\/info\/dir .packlist \*.pod)/" "$bootstrap_dir/etc/makepkg.conf"
+    perl -pi -e "s/(PURGE_TARGETS)=.*?$/\$1=({usr\/{,local\/},opt\/arch\/}{,share}\/info\/dir .packlist \*.pod)/" "$bootstrap_dir/etc/makepkg.conf"
 }
 
 function make_gpg() {
@@ -264,32 +264,32 @@ function bootstrap_stage1()
 }
 
 function bootstrap_stage2() {
-    export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
+    export PATH="/opt/arch/sbin:/opt/arch/bin:$PATH"
     local repo="mini"
     local pkgs="filesystem libtool autoconf automake pkg-config gettext readline bash xz openssl libarchive asciidoc fakeroot libgpg-error libgcrypt libassuan libksba pth pinentry gnupg gpgme pacman-mirrorlist pacman"
 
-    sudo mkdir -p /usr/local/var/lib/pacman
+    sudo mkdir -p /opt/arch/var/lib/pacman
     for pkg in $pkgs; do
         if [[ ! -e "$repo/$pkg/PKGBUILD" ]]; then
             echo "missing $pkg"
             continue
         fi
 
-        if pacman -Q -b /usr/local/var/lib/pacman $pkg >/dev/null 2>&1; then
+        if pacman -Q -b /opt/arch/var/lib/pacman $pkg >/dev/null 2>&1; then
             echo "skipping $pkg"
             continue
         fi
 
         pushd "$repo/$pkg"
         makepkg --skippgpcheck --nocheck --nodeps --force
-        sudo pacman --upgrade --dbpath /usr/local/var/lib/pacman --noconfirm --nodeps "${pkg}"-*.pkg.tar.xz
+        sudo pacman --upgrade --dbpath /opt/arch/var/lib/pacman --noconfirm --nodeps "${pkg}"-*.pkg.tar.xz
         popd
     done
 }
 
 function bootstrap_stage3() {
     export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
-    export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
+    export PATH="/opt/arch/sbin:/opt/arch/bin:$PATH"
     local repo="mini"
     local pkgs="filesystem libtool autoconf automake pkg-config gettext readline bash xz openssl libarchive asciidoc fakeroot libgpg-error libgcrypt libassuan libksba pth pinentry gnupg gpgme pacman-mirrorlist pacman"
 

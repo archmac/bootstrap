@@ -40,7 +40,7 @@ prepare() {
 build() {
   cd "$pkgname-$pkgver"
   ./build/autogen.sh
-  ./configure --prefix=/usr/local --without-xml2 --without-nettle --without-lzo2
+  ./configure --prefix=/opt/arch --without-xml2 --without-nettle --without-lzo2
   make
 }
 
@@ -54,6 +54,6 @@ package() {
   cd "$pkgname-$pkgver"
   make DESTDIR="$pkgdir" install
 
-  install -d -m755 "$pkgdir"/usr/local/share/licenses/libarchive
-  install -m644 COPYING "$pkgdir"/usr/local/share/licenses/libarchive/COPYING
+  install -d -m755 "$pkgdir"/opt/arch/share/licenses/libarchive
+  install -m644 COPYING "$pkgdir"/opt/arch/share/licenses/libarchive/COPYING
 }

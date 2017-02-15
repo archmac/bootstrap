@@ -1,4 +1,4 @@
-info_dir=usr/local/share/info
+info_dir=opt/arch/share/info
 info_files=(bash.info)
 
 post_upgrade() {

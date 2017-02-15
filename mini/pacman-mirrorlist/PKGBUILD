@@ -5,12 +5,12 @@ pkgdesc="Arch OS X mirror list for use by pacman"
 arch=('any')
 url="https://www.arch-osx.org/mirrorlist/"
 license=('GPL')
-backup=(usr/local/etc/pacman.d/mirrorlist)
+backup=(opt/arch/etc/pacman.d/mirrorlist)
 source=(mirrorlist)
 
 package() {
-  install -d -m755 $pkgdir/usr/local/etc/pacman.d
-  install -m644 $srcdir/mirrorlist $pkgdir/usr/local/etc/pacman.d/
+  install -d -m755 $pkgdir/opt/arch/etc/pacman.d
+  install -m644 $srcdir/mirrorlist $pkgdir/opt/arch/etc/pacman.d/
 }
 
 md5sums=('694ebff28762ed5564cb92cce5bde492')

@@ -37,7 +37,7 @@ build() {
   # build with -fPIC for x86_64 (FS#15634)
   [[ $CARCH == "x86_64" ]] && CFLAGS="$CFLAGS -fPIC"
 
-  ./configure --prefix=/usr/local
+  ./configure --prefix=/opt/arch
   make SHLIB_LIBS=-lncurses
 }
 

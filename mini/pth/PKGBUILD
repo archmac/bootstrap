@@ -15,10 +15,10 @@ validpgpkeys=('4E23E878D41A0A88EDFCFA5A6E744ACBA9C09E30')  # Ralf Engelschall
 build() {
   cd "$srcdir/$pkgname-$pkgver"
 
-  ./configure --prefix=/usr/local \
-              --sysconfdir=/usr/local/etc \
-              --localstatedir=/usr/local/var \
-              --mandir=/usr/local/share/man \
+  ./configure --prefix=/opt/arch \
+              --sysconfdir=/opt/arch/etc \
+              --localstatedir=/opt/arch/var \
+              --mandir=/opt/arch/share/man \
               --disable-static \
               --enable-shared \
               --with-pic

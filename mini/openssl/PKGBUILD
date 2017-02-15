@@ -11,7 +11,7 @@ license=('custom:BSD')
 depends=()
 optdepends=('ca-certificates')
 options=('!makeflags')
-backup=('usr/local/etc/ssl/openssl.cnf')
+backup=('opt/arch/etc/ssl/openssl.cnf')
 source=("https://www.openssl.org/source/${pkgname}-${_ver}.tar.gz"
         "https://www.openssl.org/source/${pkgname}-${_ver}.tar.gz.asc"
         'no-rpath.patch'
@@ -21,7 +21,7 @@ md5sums=('f3c710c045cdee5fd114feb69feba7aa'
          'SKIP'
          'dc78d3d06baffc16217519242ce92478'
          '62fc492252edd3283871632bb77fadbe'
-         '1009ebb8a1a4b996c963dad1ad32a271')
+         'b27b6c7ccd673f7e5d1746986ba2b708')
 validpgpkeys=('8657ABB260F056B1E5190839D9C4D26D0E604491')
 
 prepare() {
@@ -40,8 +40,8 @@ prepare() {
 build() {
     cd $srcdir/$pkgname-$_ver
 
-    perl ./Configure --prefix=/usr/local no-ssl2 zlib-dynamic shared enable-cms darwin64-x86_64-cc enable-ec_nistp_64_gcc_128
-    #./Configure --prefix=/usr/local --openssldir=/usr/local/etc/ssl --libdir=/usr/local/lib \
+    perl ./Configure --prefix=/opt/arch no-ssl2 zlib-dynamic shared enable-cms darwin64-x86_64-cc enable-ec_nistp_64_gcc_128
+    #./Configure --prefix=/opt/arch --openssldir=/opt/arch/etc/ssl --libdir=/opt/arch/lib \
     #    shared no-ssl3-method ${optflags} \
     #    "${openssltarget}" \
     #    "-Wa,--noexecstack ${CPPFLAGS} ${CFLAGS} ${LDFLAGS}"
@@ -61,7 +61,7 @@ check() {
 
 package() {
     cd $srcdir/$pkgname-$_ver
-    make INSTALL_PREFIX=$pkgdir MANDIR=/usr/local/share/man MANSUFFIX=ssl install
-    install -d -m755 $pkgdir/usr/local/share/licenses/$pkgname
-    install -m644 LICENSE $pkgdir/usr/local/share/licenses/$pkgname/LICENSE
+    make INSTALL_PREFIX=$pkgdir MANDIR=/opt/arch/share/man MANSUFFIX=ssl install
+    install -d -m755 $pkgdir/opt/arch/share/licenses/$pkgname
+    install -m644 LICENSE $pkgdir/opt/arch/share/licenses/$pkgname/LICENSE
 }

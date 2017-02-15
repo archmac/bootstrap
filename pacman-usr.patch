@@ -4,7 +4,7 @@
  		return 1;
  	}
  
-+	if(strcmp(filepath, "/usr/") == 0) {
++	if(strcmp(filepath, "/usr/") == 0 || strcmp(filepath, "/opt/") == 0) {
 +		/* we don't touch /usr on OS X */
 +		_alpm_log(handle, ALPM_LOG_DEBUG, _("ignoring '%s'\n"), filepath);
 +		return 1;

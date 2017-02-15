@@ -37,8 +37,8 @@ build() {
   cd ${pkgname}-${pkgver}
 
   ./configure \
-    --prefix=/usr/local \
-    --sysconfdir=/usr/local/etc
+    --prefix=/opt/arch \
+    --sysconfdir=/opt/arch/etc
 }
 
 package() {
@@ -47,12 +47,12 @@ package() {
   make install DESTDIR=${pkgdir}
 
   install -d -m755 \
-    ${pkgdir}/usr/local/lib/python2.7/site-packages
+    ${pkgdir}/opt/arch/lib/python2.7/site-packages
 
   install -m644 asciidocapi.py \
-    ${pkgdir}/usr/local/lib/python2.7/site-packages/asciidocapi.py
+    ${pkgdir}/opt/arch/lib/python2.7/site-packages/asciidocapi.py
 
   # fix FS#21579 - [asciidoc] 8.6.2-2 "asciidoc" table style doesn't work (mismatched python version) 
   #sed -i 's/python/python2/' \
-    #${pkgdir}/usr/local/etc/asciidoc/asciidoc.conf
+    #${pkgdir}/opt/arch/etc/asciidoc/asciidoc.conf
 }

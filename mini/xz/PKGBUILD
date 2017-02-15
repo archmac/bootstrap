@@ -15,7 +15,7 @@ validpgpkeys=('3690C240CE51B4670D30AD1C38EE757D69184620')
 build() {
     cd ${srcdir}/${pkgname}-${pkgver}
 
-    ./configure --prefix=/usr/local --disable-debug --disable-dependency-tracking --disable-silent-rules
+    ./configure --prefix=/opt/arch --disable-debug --disable-dependency-tracking --disable-silent-rules
     make
 }
 
@@ -27,7 +27,7 @@ check() {
 package() {
     cd ${srcdir}/${pkgname}-${pkgver}
     make DESTDIR=${pkgdir} install
-    install -d -m755 ${pkgdir}/usr/local/share/licenses/xz/
-    #ln -sf /usr/local/share/doc/xz/COPYING ${pkgdir}/usr/local/share/licenses/xz/
-    #ln -sf /usr/local/share/licenses/common/GPL2/license.txt ${pkgdir}/usr/local/share/doc/xz/COPYING.GPLv2
+    install -d -m755 ${pkgdir}/opt/arch/share/licenses/xz/
+    #ln -sf /opt/arch/share/doc/xz/COPYING ${pkgdir}/opt/arch/share/licenses/xz/
+    #ln -sf /opt/arch/share/licenses/common/GPL2/license.txt ${pkgdir}/opt/arch/share/doc/xz/COPYING.GPLv2
 }

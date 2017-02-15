@@ -1,4 +1,4 @@
-info_dir=/usr/local/share/info
+info_dir=/opt/arch/share/info
 info_files=(gnupg.info gnupg.info-1 gnupg.info-2)
 
 post_install() {

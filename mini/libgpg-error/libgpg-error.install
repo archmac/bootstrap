@@ -1,4 +1,4 @@
-infodir=usr/local/share/info
+infodir=opt/arch/share/info
 filelist=(gpgrt.info)
 
 post_install() {

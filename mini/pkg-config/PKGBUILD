@@ -17,7 +17,7 @@ validpgpkeys=('6B99CE97F17F48C27F722D71023A4420C7EC6914')  # Dan Nicholson
 
 build() {
   cd ${srcdir}/${pkgname}-${pkgver}
-  ./configure --prefix=/usr/local --with-internal-glib --disable-debug
+  ./configure --prefix=/opt/arch --with-internal-glib --disable-debug
   make
 }
 

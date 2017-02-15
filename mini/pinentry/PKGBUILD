@@ -16,7 +16,7 @@ install=pinentry.install
 build() {
     cd "${srcdir}/${pkgname}-${pkgver}"
     ./configure \
-        --prefix=/usr/local
+        --prefix=/opt/arch
     #    --enable-pinentry-curses \
     #    --enable-fallback-curses \
     #    --enable-pinentry-tty \

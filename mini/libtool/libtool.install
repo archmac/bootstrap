@@ -1,4 +1,4 @@
-infodir=usr/local/share/info
+infodir=opt/arch/share/info
 filelist=(libtool.info libtool.info-1 libtool.info-2)
 
 post_install() {

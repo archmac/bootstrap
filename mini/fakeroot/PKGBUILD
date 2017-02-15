@@ -29,8 +29,8 @@ prepare() {
 build() {
   cd $pkgname-$pkgver
 
-  ./configure --prefix=/usr/local \
-    --libdir=/usr/local/lib/libfakeroot \
+  ./configure --prefix=/opt/arch \
+    --libdir=/opt/arch/lib/libfakeroot \
     --disable-static \
     --with-ipc=sysv \
     --disable-dependency-tracking \
@@ -47,6 +47,6 @@ package() {
   make DESTDIR="$pkgdir" install
 
   # install README for sysv/tcp usage
-  install -d -m755 "$pkgdir"/usr/local/share/doc/$pkgname
-  install -m644 README "$pkgdir"/usr/local/share/doc/$pkgname/README
+  install -d -m755 "$pkgdir"/opt/arch/share/doc/$pkgname
+  install -m644 README "$pkgdir"/opt/arch/share/doc/$pkgname/README
 }

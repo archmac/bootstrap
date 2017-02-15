@@ -3,3 +3,7 @@
 /mini/*/pkg/
 /mini/*/src/
 /mini/*/*.tar.*
+/mini/bash/bash43-*
+/mini/bash/bash43-*.sig
+/mini/readline/readline63-*
+/mini/readline/readline63-*.sig
