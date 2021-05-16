@@ -1,47 +1,67 @@
 pkgname=pacman
-pkgver=5.0.1
+pkgver=5.2.1
 pkgrel=1
 pkgdesc="A library-based package manager with dependency support"
-arch=('i686' 'x86_64')
-url="http://www.archlinux.org/pacman/"
-license=('GPL')
-groups=('base' 'base-devel')
-#depends=('bash' 'glibc' 'libarchive' 'curl'
-#         'gpgme' 'pacman-mirrorlist' 'archlinux-keyring')
-depends=('bash' 'libarchive' 'gnupg' 'pacman-mirrorlist')
-makedepends=('asciidoc')   # roundup patch alters docs
-checkdepends=('python2' 'fakechroot')
-provides=('pacman-contrib')
-conflicts=('pacman-contrib')
-replaces=('pacman-contrib')
+arch=('x86_64')
 backup=(opt/arch/etc/pacman.conf opt/arch/etc/makepkg.conf)
-#options=('strip' 'debug')
 options=('strip')
-source=(https://sources.archlinux.org/other/pacman/$pkgname-$pkgver.tar.gz{,.sig}
-        0001-libmakepkg-fix-is_array-function.patch
-        pacman-usr.patch
-        pacman-usr-local.patch
-        pacman-tmp-scriptlet.patch
-        pacman.conf.x86_64
-        makepkg.conf)
-md5sums=('377a2664d6007d72d6d8a126add83bcf'
-         'SKIP'
-         '55732144f1048f714f1f93203e9b7728'
-         '252b1c5636a7aef8ef9f2a1d823c72ef'
-         'de81e1c96bf2f239bccbac95615fcf33'
-         '1566454cbabb535e36017a00e0eef370'
-         '2ced2a6763ae7708fac9c8b387035de6'
-         '62004446f14ecfdc329b5081c4c92907')
-validpgpkeys=('6645B0A8C7005E78DB1D7864F99FFE0FEAE999BD')  # Allan McRae <allan@archlinux.org>
-
+source=(
+  https://sources.archlinux.org/other/pacman/$pkgname-$pkgver.tar.gz{,.sig}
+  pacman-usr.patch
+  pacman-usr-local.patch
+  pacman-tmp-scriptlet.patch
+  pacman-lazy-chroot.patch
+  pacman-no-ro-check.patch
+  pacman-macos-signals.patch
+  makepkg-gtouch.patch
+  makepkg-chmod.patch
+  pacman.conf.x86_64
+  makepkg.conf
+  pacman-sigaction-include.patch
+)
 
 prepare() {
   cd "$pkgname-$pkgver"
 
-  patch -p1 -i $srcdir/0001-libmakepkg-fix-is_array-function.patch
   patch -p0 < ../pacman-usr.patch
   patch -p0 < ../pacman-usr-local.patch
   patch -p0 < ../pacman-tmp-scriptlet.patch
+  patch -p0 < ../pacman-lazy-chroot.patch
+  patch -p0 < ../makepkg-chmod.patch
+  patch -p0 < ../makepkg-gtouch.patch
+  patch -p0 < ../pacman-no-ro-check.patch
+  patch -p0 < ../pacman-macos-signals.patch
+  patch -p0 < ../pacman-sigaction-include.patch
+
+  patch -p0 <<'PATCH'
+--- scripts/makepkg.sh.in	2020-06-22 10:33:22.000000000 +0200
++++ -	2021-05-16 15:46:18.000000000 +0200
+@@ -635,7 +635,7 @@
+ 
+ 	write_kv_pair "pkgarch" "$pkgarch"
+ 
+-	local sum="$(sha256sum "${BUILDFILE}")"
++	local sum="$(gsha256sum "${BUILDFILE}")"
+ 	sum=${sum%% *}
+ 	write_kv_pair "pkgbuild_sha256sum" $sum
+PATCH
+
+  patch -p0 <<'PATCH'
+--- scripts/repo-add.sh.in	2021-05-16 17:50:58.000000000 +0200
++++ -	2021-05-16 17:51:02.000000000 +0200
+@@ -286,9 +286,9 @@
+ 
+ 	# compute checksums
+ 	msg2 "$(gettext "Computing checksums...")"
+-	md5sum=$(md5sum "$pkgfile")
++	md5sum=$(gmd5sum "$pkgfile")
+ 	md5sum=${md5sum%% *}
+-	sha256sum=$(sha256sum "$pkgfile")
++	sha256sum=$(gsha256sum "$pkgfile")
+ 	sha256sum=${sha256sum%% *}
+ 
+ 	# remove an existing entry if it exists, ignore failures
+PATCH
 }
 
 build() {
@@ -53,6 +73,7 @@ build() {
   export LIBCURL_LIBS="-lcurl"
   #export LIBSSL_CFLAGS="-I${bootstrap_dir/include"
   #export LIBSSL_LIBS="-lssl"
+  export BASH_SHELL=/opt/arch/bin/bash
 
   ./configure --prefix=/opt/arch --sysconfdir=/opt/arch/etc \
     --localstatedir=/opt/arch/var --enable-doc \
@@ -62,48 +83,30 @@ build() {
     --disable-dependency-tracking
     #--with-ldconfig=/usr/bin/ldconfig
   make V=1
-  make -C contrib
-}
-
-check() {
-  make -C "$pkgname-$pkgver" check
 }
 
 package() {
   cd "$pkgname-$pkgver"
 
   make DESTDIR="$pkgdir" install
-  make DESTDIR="$pkgdir" -C contrib install
 
   # install Arch specific stuff
-  install -d -m755 "$pkgdir/opt/arch/etc"
-  install -m644 "$srcdir/pacman.conf.$CARCH" "$pkgdir/opt/arch/etc/pacman.conf"
+  ginstall -d -m755 "$pkgdir/opt/arch/etc"
+  ginstall -m644 "$srcdir/pacman.conf.$CARCH" "$pkgdir/opt/arch/etc/pacman.conf"
 
   case $CARCH in
     x86_64)
       mycarch="x86_64"
-      mychost="x86_64-apple-darwin15.4.0"
+      mychost="x86_64-apple-darwin20.4.0"
       myflags="-march=x86-64"
       ;;
   esac
 
   # set things correctly in the default conf file
-  install -m644 "$srcdir/makepkg.conf" "$pkgdir/opt/arch/etc"
-  sed -i~ \
+  ginstall -m644 "$srcdir/makepkg.conf" "$pkgdir/opt/arch/etc"
+  sed -i '' \
     -e "s|@CARCH[@]|$mycarch|g" \
     -e "s|@CHOST[@]|$mychost|g" \
     -e "s|@CARCHFLAGS[@]|$myflags|g" \
     "$pkgdir/opt/arch/etc/makepkg.conf"
-
-  ## put bash_completion in the right location
-  install -d m755 "$pkgdir/opt/arch/share/bash-completion/completions"
-  mv "$pkgdir/opt/arch/etc/bash_completion.d/pacman" "$pkgdir/opt/arch/share/bash-completion/completions"
-  rmdir "$pkgdir/opt/arch/etc/bash_completion.d"
-
-  for f in makepkg pacman-key; do
-    ln -s pacman "$pkgdir/opt/arch/share/bash-completion/completions/$f"
-  done
-
-  install -d -m755 "$pkgdir/opt/arch/share/vim/vimfiles/syntax"
-  install -m644 contrib/PKGBUILD.vim "$pkgdir/opt/arch/share/vim/vimfiles/syntax/PKGBUILD.vim"
 }

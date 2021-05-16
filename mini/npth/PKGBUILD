@@ -1,0 +1,19 @@
+pkgname=npth
+pkgver=1.6
+pkgrel=1
+pkgdesc='New portable threads library'
+arch=('x86_64')
+options=('!libtool')
+source=("https://gnupg.org/ftp/gcrypt/${pkgname}/${pkgname}-${pkgver}.tar.bz2"{,.sig})
+
+build() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	./configure --prefix=/opt/arch --enable-maintainer-mode
+	make
+}
+
+package() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+}
+

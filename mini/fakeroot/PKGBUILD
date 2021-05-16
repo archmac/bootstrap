@@ -1,34 +1,44 @@
 pkgname=fakeroot
-pkgver=1.20.2
-pkgrel=1
+pkgver=1.25.3
+pkgrel=2
 pkgdesc='Tool for simulating superuser privileges'
 arch=('x86_64')
-license=('GPL')
-url="http://packages.debian.org/fakeroot"
-groups=('base-devel')
-depends=()
-source=(http://ftp.debian.org/debian/pool/main/f/$pkgname/${pkgname}_${pkgver}.orig.tar.bz2
-        0002-OS-X-10.10-introduced-id_t-int-in-gs-etpriority.patch
-        0001-Implement-openat-2-wrapper-which-handles-optional-ar.patch
-        fakeroot-darwin-openat-wraptmp.patch
-        fakeroot-darwin-openat.patch)
-md5sums=('a4b4564a75024aa96c86e4d1017ac786'
-         '303823f943f46ba48d11e263641f1edb'
-         '8a0db3599d0300f0860ea33bb5cd09df'
-         '53b5443661c662b2e4ddf8cef1cf089e'
-         '25ece68bb4e16f53b9b0a15e225f63de')
+source=(https://salsa.debian.org/clint/fakeroot/-/archive/24d6b0857396cad87b2cabd32fb8af9ef4799915/fakeroot-24d6b0857396cad87b2cabd32fb8af9ef4799915.tar.bz2)
 
 prepare() {
-  cd $pkgname-$pkgver
+  cd fakeroot-24d6b0857396cad87b2cabd32fb8af9ef4799915
 
-  patch -p1 -i ../0002-OS-X-10.10-introduced-id_t-int-in-gs-etpriority.patch
-  patch -p1 -i ../0001-Implement-openat-2-wrapper-which-handles-optional-ar.patch
-  patch -p1 -i ../fakeroot-darwin-openat.patch
+  patch -p0 <<'PATCH'
+--- configure.ac	2021-05-16 13:10:01.000000000 +0200
++++ -	2021-05-16 13:10:04.000000000 +0200
+@@ -604,8 +604,6 @@
+ AC_CONFIG_FILES([
+    Makefile
+    scripts/Makefile
+-   doc/Makefile
+-   doc/de/Makefile doc/es/Makefile doc/fr/Makefile doc/nl/Makefile doc/pt/Makefile doc/sv/Makefile
+    test/Makefile test/defs])
+ AC_OUTPUT
+PATCH
+  patch -p0 <<'PATCH'
+--- Makefile.am	2021-02-18 23:31:25.000000000 +0100
++++ -	2021-05-16 13:15:15.000000000 +0200
+@@ -1,6 +1,6 @@
+ AUTOMAKE_OPTIONS=foreign
+ ACLOCAL_AMFLAGS = -I build-aux
+-SUBDIRS=doc scripts test
++SUBDIRS=scripts test
+ 
+ noinst_LTLIBRARIES = libcommunicate.la libmacosx.la
+ libcommunicate_la_SOURCES = communicate.c
+PATCH
 }
 
 build() {
-  cd $pkgname-$pkgver
+  cd fakeroot-24d6b0857396cad87b2cabd32fb8af9ef4799915
 
+  export LIBTOOLIZE=glibtoolize
+  ./bootstrap
   ./configure --prefix=/opt/arch \
     --libdir=/opt/arch/lib/libfakeroot \
     --disable-static \
@@ -36,17 +46,14 @@ build() {
     --disable-dependency-tracking \
     --disable-silent-rules
 
-  make wraptmpf.h
-  patch -p1 -i ../fakeroot-darwin-openat-wraptmp.patch
-
   make
 }
 
 package() {
-  cd $pkgname-$pkgver
+  cd fakeroot-24d6b0857396cad87b2cabd32fb8af9ef4799915
   make DESTDIR="$pkgdir" install
 
   # install README for sysv/tcp usage
-  install -d -m755 "$pkgdir"/opt/arch/share/doc/$pkgname
-  install -m644 README "$pkgdir"/opt/arch/share/doc/$pkgname/README
+  ginstall -d -m755 "$pkgdir"/opt/arch/share/doc/$pkgname
+  ginstall -m644 README "$pkgdir"/opt/arch/share/doc/$pkgname/README
 }

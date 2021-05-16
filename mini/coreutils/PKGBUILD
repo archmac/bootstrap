@@ -1,0 +1,27 @@
+pkgname=coreutils
+pkgver=8.31
+pkgrel=2
+pkgdesc='The basic file, shell and text manipulation utilities of the GNU operating system'
+arch=('x86_64')
+source=("https://ftp.gnu.org/gnu/$pkgname/$pkgname-$pkgver.tar.xz"{,.sig})
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure \
+      --prefix=/opt/arch \
+      --libexecdir=/opt/arch/lib \
+      --program-prefix=g \
+      --without-gmp \
+      --enable-no-install-program=groups,hostname,kill,uptime \
+      gl_cv_func_ftello_works=yes
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+  for f in b2sum base32 chcon hostid md5sum nproc numfmt pinky ptx realpath runcon sha1sum sha224sum sha256sum sha384sum sha512sum shred shuf stdbuf tac timeout truncate; do
+    ln -s "g$f" "$pkgdir/opt/arch/bin/$f"
+    ln -s "g$f.1" "$pkgdir/opt/arch/share/man/man1/$f"
+  done
+}

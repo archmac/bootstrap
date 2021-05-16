@@ -1,6 +1,6 @@
 ##
-## Arch OS X repository mirrorlist
+## ArchMac repository mirrorlist
 ##
 
 ## Worldwide
-#Server = http://mirror.rackspace.com/archlinux/$repo/os/$arch
+Server = https://archmac.fra1.cdn.digitaloceanspaces.com/packages/$repo/darwin20/$arch

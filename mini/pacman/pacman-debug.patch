@@ -1,0 +1,65 @@
+--- lib/libalpm/trans.c.orig	2016-04-09 14:11:01.000000000 +0200
++++ lib/libalpm/trans.c	2016-04-09 14:12:53.000000000 +0200
+@@ -334,20 +334,24 @@
+ 	int retval = 0;
+ 	size_t len;
+ 
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	if(_alpm_access(handle, NULL, filepath, R_OK) != 0) {
+ 		_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' not found\n", filepath);
+ 		return 0;
+ 	}
+ 
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	if(!is_archive && !grep(filepath, script)) {
+ 		/* script not found in scriptlet file; we can only short-circuit this early
+ 		 * if it is an actual scriptlet file and not an archive. */
+ 		return 0;
+ 	}
+ 
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	strcpy(arg0, SCRIPTLET_SHELL);
+ 	strcpy(arg1, "-c");
+ 
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	/* create a directory in $root/tmp/ for copying/extracting the scriptlet */
+ 	len = strlen(handle->root) + strlen("tmp/alpm_XXXXXX") + 1;
+ 	MALLOC(tmpdir, len, RET_ERR(handle, ALPM_ERR_MEMORY, -1));
+@@ -355,6 +359,7 @@
+ 	if(access(tmpdir, F_OK) != 0) {
+ 		_alpm_makepath_mode(tmpdir, 01777);
+ 	}
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	snprintf(tmpdir, len, "%stmp/alpm_XXXXXX", handle->root);
+ 	if(mkdtemp(tmpdir) == NULL) {
+ 		_alpm_log(handle, ALPM_LOG_ERROR, _("could not create temp directory\n"));
+@@ -362,6 +367,7 @@
+ 		return 1;
+ 	}
+ 
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	/* either extract or copy the scriptlet */
+ 	len += strlen("/.INSTALL");
+ 	MALLOC(scriptfn, len, free(tmpdir); RET_ERR(handle, ALPM_ERR_MEMORY, -1));
+@@ -380,11 +386,13 @@
+ 		goto cleanup;
+ 	}
+ 
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	if(is_archive && !grep(scriptfn, script)) {
+ 		/* script not found in extracted scriptlet file */
+ 		goto cleanup;
+ 	}
+ 
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	/* chop off the root so we can find the tmpdir in the chroot */
+ 	scriptpath = scriptfn + strlen(handle->root) - 1;
+ 
+@@ -396,6 +404,7 @@
+ 				scriptpath, script, ver);
+ 	}
+ 
++	_alpm_log(handle, ALPM_LOG_DEBUG, "scriptlet '%s' debug 01\n", filepath);
+ 	_alpm_log(handle, ALPM_LOG_DEBUG, "executing \"%s\"\n", cmdline);
+ 
+ 	retval = _alpm_run_chroot(handle, SCRIPTLET_SHELL, argv, NULL, NULL);

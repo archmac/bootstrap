@@ -1,0 +1,20 @@
+--- lib/libalpm/util.c	2021-05-15 15:14:50.000000000 +0200
++++ -	2021-05-15 15:14:52.000000000 +0200
+@@ -33,6 +33,7 @@
+ #include <sys/socket.h>
+ #include <fnmatch.h>
+ #include <poll.h>
++#include <signal.h>
+ 
+ /* libarchive */
+ #include <archive.h>
+--- src/pacman/conf.c	2020-06-22 10:33:22.000000000 +0200
++++ -	2021-05-15 15:20:58.000000000 +0200
+@@ -31,6 +31,7 @@
+ #include <sys/utsname.h> /* uname */
+ #include <sys/wait.h>
+ #include <unistd.h>
++#include <signal.h>
+ 
+ /* pacman */
+ #include "conf.h"

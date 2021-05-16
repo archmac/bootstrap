@@ -1,27 +1,14 @@
 pkgname=libgpg-error
-pkgver=1.21
+pkgver=1.42
 pkgrel=1
 pkgdesc="Support library for libgcrypt"
-arch=(i686 x86_64)
-url="http://www.gnupg.org"
-license=('LGPL')
-depends=()
+arch=('x86_64')
 source=(ftp://ftp.gnupg.org/gcrypt/libgpg-error/${pkgname}-${pkgver}.tar.bz2{,.sig})
-install=libgpg-error.install
-# https://www.gnupg.org/download/integrity_check.html
-sha1sums=('ef1dfb2f8761f019091180596e9e638d8cc37513'
-          'SKIP')
-validpgpkeys=('D8692123C4065DEA5E0F3AB5249B39D24F25E3B6') # Werner Koch
 
 build() {
   cd ${pkgname}-${pkgver}
   ./configure --prefix=/opt/arch
   make
-}
-
-check() {
-  cd ${pkgname}-${pkgver}
-  make check
 }
 
 package() {

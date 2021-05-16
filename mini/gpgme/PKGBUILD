@@ -1,28 +1,18 @@
 pkgname=gpgme
-pkgver=1.6.0
-pkgrel=2
+pkgver=1.15.1
+pkgrel=1
 pkgdesc="A C wrapper library for GnuPG"
 arch=('x86_64')
-url="http://www.gnupg.org/related_software/gpgme/"
-license=('LGPL')
-depends=('libgpg-error' 'gnupg>=2')
-install=${pkgname}.install
 options=('!emptydirs')
-source=(ftp://ftp.gnupg.org/gcrypt/${pkgname}/${pkgname}-${pkgver}.tar.bz2{,.sig})
-md5sums=('60d730d22e8065fd5de309e8b98e304b'
-         'SKIP')
-validpgpkeys=('D8692123C4065DEA5E0F3AB5249B39D24F25E3B6') # Werner Koch
+source=(https://www.gnupg.org/ftp/gcrypt/${pkgname}/${pkgname}-${pkgver}.tar.bz2{,.sig})
 
 build() {
   cd ${srcdir}/${pkgname}-${pkgver}
   ./configure --prefix=/opt/arch --disable-fd-passing --disable-static \
               --disable-gpgsm-test
+  sed -i .orig -e 's/DIST_SUBDIRS = src tests doc lang/DIST_SUBDIRS = src doc lang/' Makefile
+  sed -i .orig -e 's/SUBDIRS = src ${tests} doc lang/SUBDIRS = src doc lang/' Makefile
   make
-}
-
-check() {
-  cd ${srcdir}/${pkgname}-${pkgver}
-  make check
 }
 
 package() {
